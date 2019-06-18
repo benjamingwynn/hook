@@ -1,0 +1,15 @@
+[
+	{
+		"name": "hook",
+		"script": "src/index.js",
+		"watch": true,
+		"env": {
+			"NODE_ENV": "development",
+			"DEBUG": "*"
+		},
+		"env_production": {
+			"NODE_ENV": "production",
+			"DEBUG": "*"
+		}
+	}
+]
