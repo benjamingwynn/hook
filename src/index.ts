@@ -17,7 +17,7 @@ function logger(module: string) {
 
 /** Shorthand for outputting important messages to the user. */
 function say(message: string): void {
-	console.error(message)
+	console.info(message)
 }
 
 class ConfigError extends Error {}
