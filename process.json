@@ -1,7 +1,7 @@
 [
 	{
 		"name": "hook",
-		"script": "src/index.js",
+		"script": "dist/index.js",
 		"watch": true,
 		"env": {
 			"NODE_ENV": "development",
