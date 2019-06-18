@@ -2,6 +2,7 @@
 
 apps:
     - script: src/index.js
+      name: hook
       instances: 1
       watch: true
       env:
