@@ -138,7 +138,9 @@ const TOKEN_FILE_NAME = ".hook.token"
 					const dir = directories[i]
 					say(" 🙌  Pulling " + dir)
 					shell.cd(dir)
-					const result = shell.exec("git pull" + (args.force ? " --force" : ""))
+					const command = "git pull" + (args.force ? " --force" : "")
+					const result = shell.exec(command)
+					log("Executing `" + command + "`")
 					if (result.code === 0) {
 						say(" 👌  Pulled the repo successfully")
 					} else {
