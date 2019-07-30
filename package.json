@@ -26,7 +26,6 @@
 		"typescript": "^3.5.2"
 	},
 	"scripts": {
-		"dev": "DEBUG=* ts-node src/index.ts",
 		"build": "tsc",
 		"test": "echo \"Error: no test specified\" && exit 1"
 	},
