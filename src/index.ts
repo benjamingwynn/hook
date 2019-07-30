@@ -142,8 +142,12 @@ const TOKEN_FILE_NAME = ".hook.token"
 					const commands = []
 					if (args.force) {
 						commands.push("git reset --hard HEAD")
+					}
+
+					if (args.clean) {
 						commands.push("git clean -f -d")
 					}
+
 					commands.push("git pull")
 
 					let result: number = -1
