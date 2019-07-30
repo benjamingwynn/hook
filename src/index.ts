@@ -138,10 +138,23 @@ const TOKEN_FILE_NAME = ".hook.token"
 					const dir = directories[i]
 					say(" 🙌  Pulling " + dir)
 					shell.cd(dir)
-					const command = "git pull" + (args.force ? " --force" : "")
-					const result = shell.exec(command)
-					log("Executing `" + command + "`")
-					if (result.code === 0) {
+
+					const commands = []
+					if (args.force) {
+						commands.push("git reset --hard HEAD")
+						commands.push("git clean -f -d")
+					}
+					commands.push("git pull")
+
+					let result: number = -1
+					for (let i = 0; i < commands.length; i++) {
+						const command = commands[i]
+						log("Executing `" + command + "`")
+						result = shell.exec(command).code
+						if (result) break
+					}
+
+					if (result === 0) {
 						say(" 👌  Pulled the repo successfully")
 					} else {
 						say(" 👎  Failed to pull the repo. Consult the logs for more information.")
