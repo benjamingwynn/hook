@@ -21,7 +21,7 @@ function say(message: string): void {
 }
 
 class ConfigError extends Error {}
-const token_FILE_NAME = ".hook.token"
+const TOKEN_FILE_NAME = ".hook.token"
 ;(async function() {
 	const log = logger("setup")
 
@@ -46,18 +46,12 @@ const token_FILE_NAME = ".hook.token"
 	}
 
 	let serverArg = args._[0]
-	let directoryArg = args._[1]
 
 	if (!serverArg) {
 		throw new ConfigError("Missing server argument. See documentation.")
 	}
 
-	if (!directoryArg) {
-		throw new ConfigError("Missing directory argument. See documentation.")
-	}
-
 	log("serverArg:", serverArg)
-	log("directory:", directoryArg)
 
 	// remove leading port number ":" character from server string
 	serverArg = serverArg.replace(":", "")
@@ -65,39 +59,60 @@ const token_FILE_NAME = ".hook.token"
 	const port = s[0]
 	const route = s[1] || "/"
 
-	// Load the directory and ensure it is a valid git repo
-	log("trying to read git directory")
-	directoryArg = path.resolve(directoryArg) // get long path
-	const exists = await fs.pathExists(directoryArg + "/.git")
-	if (!exists) {
-		throw new ConfigError("Directory does not appear to be a valid git repository.")
+	let directories = args._.slice(1)
+
+	if (!directories.length) {
+		throw new ConfigError("Missing directory argument. See documentation.")
 	}
 
-	log("directory seems like a valid repo, cool")
+	for (let i = 0; i < directories.length; i++) {
+		log("directory:", directories[i])
+
+		// Load the directory and ensure it is a valid git repo
+		log("trying to read git directory")
+		directories[i] = path.resolve(directories[i]) // get long path
+		const exists = await fs.pathExists(directories[i] + "/.git")
+		if (!exists) {
+			throw new ConfigError('"' + directories[i] + '" does not appear to be a valid git repository.')
+		}
+
+		log("directory seems like a valid repo, cool")
+	}
 
 	// configure the gitlab header
 	let token = ""
 
 	if (!args.gitlab) {
 		throw new ConfigError("--gitlab wasn't passed. Only Gitlab hooks are supported at this time.")
-	}
-
-	if (args.gitlab === true) {
+	} else if (args.gitlab === true) {
 		const log = logger("setup/token")
 
-		// try to read the token
-		const tokenPath = path.join(directoryArg, token_FILE_NAME)
-		try {
-			log("loading existing token from:", tokenPath)
-			token = (await fs.readFile(tokenPath)).toString()
-			log("okay. token loaded from disk")
-		} catch (ex) {
-			log("could not read the file", ex.message)
-			log("generating a token...")
-			token = crypto.randomBytes(64).toString("base64")
-			log("writing the token to the file...")
-			await fs.writeFile(tokenPath, token)
-			say("✨  Written a new token to `" + tokenPath + "`. You might want to add " + token_FILE_NAME + " to your .gitignore file if it's not already there!")
+		for (let i = 0; i < directories.length; i++) {
+			const directory = directories[i]
+			const tokenPath = path.join(directory, TOKEN_FILE_NAME)
+
+			try {
+				log("loading existing token from:", tokenPath)
+				token = (await fs.readFile(tokenPath)).toString()
+				log("okay. token loaded from disk")
+				break
+			} catch (ex) {
+				log("could not read the token file", ex.message)
+			}
+		}
+
+		// if we didn't get a token, generate one
+		if (!token) {
+			for (let i = 0; i < directories.length; i++) {
+				const directory = directories[i]
+				const tokenPath = path.join(directory, TOKEN_FILE_NAME)
+
+				log("generating a token...")
+				token = crypto.randomBytes(64).toString("base64")
+				log("writing the token to the file...")
+				await fs.writeFile(tokenPath, token)
+				say("✨  Written a new token to `" + tokenPath + "`. You might want to add " + TOKEN_FILE_NAME + " to your .gitignore file if it's not already there!")
+			}
 		}
 	} else {
 		log("using gitlab token from command line", args.gitlab)
@@ -118,12 +133,17 @@ const token_FILE_NAME = ".hook.token"
 			log("got a request")
 			if (reqToken === token) {
 				say(" 👋  Gitlab just triggered our webhook.")
-				shell.cd(directoryArg)
-				const result = shell.exec("git pull")
-				if (result.code === 0) {
-					say(" 👌  Pulled the repo successfully.")
-				} else {
-					say(" 👎  Failed to pull the repo. Consult the logs for more information.")
+
+				for (let i = 0; i < directories.length; i++) {
+					const dir = directories[i]
+					say(" 🙌  Pulling " + dir)
+					shell.cd(dir)
+					const result = shell.exec("git pull")
+					if (result.code === 0) {
+						say(" 👌  Pulled the repo successfully")
+					} else {
+						say(" 👎  Failed to pull the repo. Consult the logs for more information.")
+					}
 				}
 				return "Success."
 			} else {
