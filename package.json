@@ -10,7 +10,7 @@
 		"hapi": "^18.1.0",
 		"marked": "^0.6.2",
 		"marked-terminal": "^3.2.0",
-		"minimist": "^1.2.0",
+		"minimist": "^1.2.3",
 		"shelljs": "^0.8.3",
 		"supports-color": "^7.0.0"
 	},
